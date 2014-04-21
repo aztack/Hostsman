@@ -56,16 +56,48 @@ type
   private
     function generateHostFile():TStringList;
     procedure adjustListViewHeader();
+    procedure parseHostFile();
   public
     { Public declarations }
   end;
 
+  THostRecord = record
+    IP,Host,Comment:string;
+  end;
+
 var
   HostmanForm: THostmanForm;
+const
+     hostPath = 'C:\Windows\System32\drivers\etc\hosts';
+     hostPathEscaped = 'C:\\Windows\\System32\\drivers\\etc\\hosts';
 
 implementation
-uses ShellAPI;
+uses RegExpr, ShellAPI;
 {$R *.dfm}
+
+procedure THostmanForm.parseHostFile();
+var matched,lines:TStringList;
+    line:string;
+    i:integer;
+begin
+     lines := TStringList.Create();
+     lines.LoadFromFile(hostPathEscaped);
+     for i := 0 to lines.Count -1 do begin
+         line := lines[i];
+         if not ExecRegExpr('^\s*#',line) then begin
+           matched := TStringList.Create;
+           SplitRegExpr('(\s+)|(\s+#)',line,matched);
+           line := matched.Text;
+           if matched.Count>= 2 then begin
+             with cxTreeList1.Root.AddChild do begin
+                Texts[0] := matched[0];
+                Texts[1] := matched[1];
+                if matched.Count > 2 then Texts[2] := StringReplace(matched[2],'#','',[]);
+             end;
+           end;
+         end
+     end;
+end;
 
 procedure THostmanForm.Add1Click(Sender: TObject);
 var node:TcxTreeListNode;
@@ -129,18 +161,17 @@ end;
 
 procedure THostmanForm.ApplyButtonClick(Sender: TObject);
 var sl :TStringList;
-const hostPath = 'C:\Windows\System32\drivers\etc\hosts';
 begin
   if Application.MessageBox(PChar(Format('Overwrite %s ?',[hostPath])),
     'Warnning', MB_OKCANCEL + MB_ICONQUESTION) = IDOK then begin
 
      sl := self.generateHostFile();
      try
-        sl.SaveToFile('c:\\windows\\system32\\drivers\\etc\\hosts');
+        sl.SaveToFile(hostPathEscaped);
         Application.MessageBox(PChar('Done!'), 'Done', MB_OK +
           MB_ICONINFORMATION);
      except
-       Application.MessageBox('Overwrite C:\Windows\System32\drivers\etc\hosts  Failed!', 
+       Application.MessageBox('Overwrite '+ hostPath +'  Failed!', 
          'Error', MB_OKCANCEL + MB_ICONSTOP);
      end;
      sl.Free;
@@ -160,7 +191,11 @@ end;
 procedure THostmanForm.FormCreate(Sender: TObject);
 begin
   adjustListViewHeader;
-  if(FileExists('default.host')) then cxTreeList1.LoadFromFile('default.host');
+  if(FileExists('default.host')) then begin
+    cxTreeList1.LoadFromFile('default.host')
+  end else begin
+    parseHostFile();
+  end;
 end;
 
 procedure THostmanForm.AddSubitem1Click(Sender: TObject);
