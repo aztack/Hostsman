@@ -61,10 +61,6 @@ type
     { Public declarations }
   end;
 
-  THostRecord = record
-    IP,Host,Comment:string;
-  end;
-
 var
   HostmanForm: THostmanForm;
 const
@@ -168,6 +164,7 @@ begin
      sl := self.generateHostFile();
      try
         sl.SaveToFile(hostPathEscaped);
+        cxTreeList1.SaveToFile('default.host');
         Application.MessageBox(PChar('Done!'), 'Done', MB_OK +
           MB_ICONINFORMATION);
      except
