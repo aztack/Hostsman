@@ -1,12 +1,12 @@
 object HostmanForm: THostmanForm
-  Left = 289
-  Top = 364
-  Width = 537
-  Height = 434
+  Left = 300
+  Top = 274
+  Width = 635
+  Height = 481
   Caption = 'Hostsman'
   Color = clWhite
   Constraints.MinHeight = 434
-  Constraints.MinWidth = 537
+  Constraints.MinWidth = 635
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
@@ -1200,8 +1200,8 @@ object HostmanForm: THostmanForm
   OnCreate = FormCreate
   OnResize = FormResize
   DesignSize = (
-    521
-    396)
+    619
+    443)
   PixelsPerInch = 96
   TextHeight = 13
   object Bevel1: TBevel
@@ -1211,11 +1211,27 @@ object HostmanForm: THostmanForm
     Height = 9
     Shape = bsTopLine
   end
+  object Label1: TLabel
+    Left = 96
+    Top = 383
+    Width = 95
+    Height = 13
+    Anchors = [akLeft, akBottom]
+    Caption = 'Show Main Window'
+  end
+  object Label2: TLabel
+    Left = 128
+    Top = 415
+    Width = 67
+    Height = 13
+    Anchors = [akLeft, akBottom]
+    Caption = 'Write to Hosts'
+  end
   object cxTreeList1: TcxTreeList
     Left = 8
     Top = 8
-    Width = 505
-    Height = 343
+    Width = 603
+    Height = 361
     Anchors = [akLeft, akTop, akRight, akBottom]
     Bands = <
       item
@@ -1223,12 +1239,13 @@ object HostmanForm: THostmanForm
         Options.Sizing = False
       end>
     LookAndFeel.Kind = lfUltraFlat
-    OptionsBehavior.AlwaysShowEditor = True
+    OptionsBehavior.GoToNextCellOnTab = True
+    OptionsBehavior.ImmediateEditor = False
     OptionsBehavior.DragDropText = True
     PopupMenu = PopupMenu1
     TabOrder = 0
     OnDblClick = cxTreeList1DblClick
-    OnMouseUp = cxTreeList1MouseUp
+    OnEdited = cxTreeList1Edited
     Data = {
       000005000E0100000F00000044617461436F6E74726F6C6C6572310400000012
       000000546378537472696E6756616C7565547970651200000054637853747269
@@ -1288,47 +1305,80 @@ object HostmanForm: THostmanForm
     end
   end
   object ExitButton: TBitBtn
-    Left = 440
-    Top = 360
+    Left = 538
+    Top = 407
     Width = 75
     Height = 25
     Anchors = [akRight, akBottom]
     Caption = 'E&xit'
-    TabOrder = 1
+    TabOrder = 6
     OnClick = ExitButtonClick
   end
   object ApplyButton: TBitBtn
-    Left = 358
-    Top = 360
+    Left = 456
+    Top = 407
     Width = 75
     Height = 25
     Anchors = [akRight, akBottom]
     Caption = '&Apply'
     Default = True
-    TabOrder = 2
+    TabOrder = 5
     OnClick = ApplyButtonClick
   end
   object AboutButton: TBitBtn
-    Left = 6
-    Top = 360
+    Left = 8
+    Top = 375
     Width = 75
     Height = 25
     Anchors = [akLeft, akBottom]
     Caption = 'Abou&t'
-    TabOrder = 3
+    TabOrder = 1
     OnClick = AboutButtonClick
   end
   object EditHostsButton: TButton
-    Left = 88
-    Top = 360
+    Left = 8
+    Top = 407
     Width = 75
     Height = 25
     Anchors = [akLeft, akBottom]
     Caption = 'Edit hosts ...'
-    TabOrder = 4
+    TabOrder = 2
     OnClick = EditHostsButtonClick
   end
+  object SaveButton: TButton
+    Left = 370
+    Top = 407
+    Width = 75
+    Height = 25
+    Anchors = [akRight, akBottom]
+    Caption = '&Save'
+    TabOrder = 4
+    OnClick = SaveButtonClick
+  end
+  object HotKey1: THotKey
+    Left = 200
+    Top = 378
+    Width = 129
+    Height = 22
+    Anchors = [akLeft, akBottom]
+    HotKey = 24699
+    Modifiers = [hkShift, hkCtrl]
+    TabOrder = 3
+    OnExit = HotKey1Exit
+  end
+  object HotKey2: THotKey
+    Left = 200
+    Top = 410
+    Width = 129
+    Height = 22
+    Anchors = [akLeft, akBottom]
+    HotKey = 24698
+    Modifiers = [hkShift, hkCtrl]
+    TabOrder = 7
+    OnExit = HotKey1Exit
+  end
   object PopupMenu1: TPopupMenu
+    OnPopup = PopupMenu1Popup
     Left = 88
     Top = 232
     object Add1: TMenuItem
@@ -3607,6 +3657,26 @@ object HostmanForm: THostmanForm
   object ApplicationEvents1: TApplicationEvents
     OnMinimize = ApplicationEvents1Minimize
     Left = 144
+    Top = 232
+  end
+  object HotKeyManager1: THotKeyManager
+    OnHotKeyPressed = HotKeyManager1HotKeyPressed
+    Left = 216
+    Top = 232
+  end
+  object ObjectStorage1: TLMDObjectStorage
+    Properties = <
+      item
+        Name = 'HotKey'
+        ComponentName = 'HotKey1'
+      end
+      item
+        Name = 'HotKey'
+        ComponentName = 'HotKey2'
+      end>
+    RegistryPath = 'Software\NuTs\Hostman\HotkeyOpen'
+    RegistryKey = rrCurrentUser
+    Left = 248
     Top = 232
   end
 end

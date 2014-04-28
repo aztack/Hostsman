@@ -9,7 +9,8 @@ uses
   cxMemo, cxStyles, cxVGrid, cxInplaceContainer, cxCheckBox, cxDropDownEdit,
   Menus, cxButtons, cxExportVGLink, cxListView, cefvcl, cxCustomData, cxTL,
   cxTLdxBarBuiltInMenu, cxButtonEdit, cxMaskEdit, Buttons, ExtCtrls,
-  acClasses, acCaptionButton, acTrayIcon, AppEvnts;
+  acClasses, acCaptionButton, acTrayIcon, AppEvnts, HotKeyManager,
+  LMDCustomComponent, LMDObjectStorage;
 
 type
   THostmanForm = class(TForm)
@@ -36,6 +37,13 @@ type
     Aboutt1: TMenuItem;
     ApplicationEvents1: TApplicationEvents;
     Apply1: TMenuItem;
+    SaveButton: TButton;
+    HotKeyManager1: THotKeyManager;
+    HotKey1: THotKey;
+    ObjectStorage1: TLMDObjectStorage;
+    Label1: TLabel;
+    Label2: TLabel;
+    HotKey2: THotKey;
     procedure Add1Click(Sender: TObject);
     procedure Delete1Click(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
@@ -43,8 +51,6 @@ type
     procedure ApplyButtonClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure AddSubitem1Click(Sender: TObject);
-    procedure cxTreeList1MouseUp(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
     procedure Saveas1Click(Sender: TObject);
     procedure Load1Click(Sender: TObject);
     procedure cxTreeList1DblClick(Sender: TObject);
@@ -53,16 +59,24 @@ type
     procedure EditHostsButtonClick(Sender: TObject);
     procedure acTrayIcon1DblClick(Sender: TObject);
     procedure ApplicationEvents1Minimize(Sender: TObject);
+    procedure cxTreeList1Edited(Sender: TcxCustomTreeList;
+      AColumn: TcxTreeListColumn);
+    procedure PopupMenu1Popup(Sender: TObject);
+    procedure SaveButtonClick(Sender: TObject);
+    procedure HotKeyManager1HotKeyPressed(HotKey: Cardinal; Index: Word);
+    procedure HotKey1Exit(Sender: TObject);
   private
     function generateHostFile():TStringList;
     procedure adjustListViewHeader();
     procedure parseHostFile();
+    procedure AddHotkey();
   public
     { Public declarations }
   end;
 
 var
   HostmanForm: THostmanForm;
+  prevHotKey:Cardinal;
 const
      hostPath = 'C:\Windows\System32\drivers\etc\hosts';
      hostPathEscaped = 'C:\\Windows\\System32\\drivers\\etc\\hosts';
@@ -118,6 +132,7 @@ end;
 procedure THostmanForm.ExitButtonClick(Sender: TObject);
 begin
   cxTreeList1.SaveToFile('default.host');
+  ObjectStorage1.Save;
   Application.Terminate;
 end;
 
@@ -193,6 +208,9 @@ begin
   end else begin
     parseHostFile();
   end;
+  prevHotKey := 0;
+  ObjectStorage1.Load;
+  AddHotkey;
 end;
 
 procedure THostmanForm.AddSubitem1Click(Sender: TObject);
@@ -202,16 +220,6 @@ begin
      child := node.AddChild;
      node.Expand(True);
      child.Selected := true;
-end;
-
-procedure THostmanForm.cxTreeList1MouseUp(Sender: TObject;
-  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-begin
-     if Button = mbRight then begin
-       if (Sender = cxTreeList1) and (cxTreeList1.SelectionCount = 1) then begin
-          AddSubitem1.Enabled := (cxTreeList1.Selections[0].Parent = cxTreeList1.Root);
-       end;
-     end;
 end;
 
 procedure THostmanForm.Saveas1Click(Sender: TObject);
@@ -250,11 +258,7 @@ end;
 
 procedure THostmanForm.cxTreeList1DblClick(Sender: TObject);
 begin
-     if cxTreeList1.Root.Expanded then begin
-       cxTreeList1.Root.Expand(True);
-     end else begin
-       cxTreeList1.Root.Collapse(True);
-     end;
+     cxTreeList1.OptionsBehavior.ImmediateEditor := True;
 end;
 
 procedure THostmanForm.FormResize(Sender: TObject);
@@ -287,6 +291,66 @@ end;
 procedure THostmanForm.ApplicationEvents1Minimize(Sender: TObject);
 begin
      acTrayIcon1.MinimizeToTray;
+end;
+
+procedure THostmanForm.cxTreeList1Edited(Sender: TcxCustomTreeList;
+  AColumn: TcxTreeListColumn);
+begin
+     cxTreeList1.OptionsBehavior.ImmediateEditor := False;
+end;
+
+procedure THostmanForm.PopupMenu1Popup(Sender: TObject);
+begin
+     if cxTreeList1.SelectionCount = 1 then begin
+        AddSubitem1.Enabled := (cxTreeList1.Selections[0].Parent = cxTreeList1.Root);
+     end;
+end;
+
+procedure THostmanForm.SaveButtonClick(Sender: TObject);
+begin
+     try
+        cxTreeList1.SaveToFile('default.host');
+        Application.MessageBox('Done!', 'About', MB_OK + MB_ICONINFORMATION);
+     except
+       Application.MessageBox('Save Failed!', 'About', MB_OK + MB_ICONSTOP);
+     end
+end;
+
+procedure THostmanForm.AddHotkey();
+var hk1,hk2:Cardinal;
+begin
+  try
+    hk1 := HotKey1.HotKey;
+    hk2 := HotKey2.HotKey;
+    HotKeyManager1.ClearHotKeys;
+    HotKeyManager1.AddHotKey(hk1);
+    HotKeyManager1.AddHotKey(hk2);
+  except
+    Application.MessageBox('Register Hotkey Failed!', 'Error', MB_OK +
+      MB_ICONSTOP);
+  end;
+end;
+
+procedure THostmanForm.HotKeyManager1HotKeyPressed(HotKey: Cardinal;
+  Index: Word);
+var sl :TStringList;
+begin
+ if HotKey = HotKey1.HotKey then begin
+   if self.Visible then acTrayIcon1.MinimizeToTray else acTrayIcon1.RestoreFromTray;
+ end else if HotKey = HotKey2.HotKey then begin
+     try
+       sl := self.generateHostFile();
+       sl.SaveToFile(hostPathEscaped);
+     except
+       Application.MessageBox('Overwrite '+ hostPath +'  Failed!', 
+         'Error', MB_OKCANCEL + MB_ICONSTOP);
+     end;
+ end;
+end;
+
+procedure THostmanForm.HotKey1Exit(Sender: TObject);
+begin
+     AddHotkey();
 end;
 
 end.
